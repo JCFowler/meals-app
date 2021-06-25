@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:meals/models/meal.dart';
 
 import '../widgets/meal_item.dart';
-import '../dummy_data.dart';
 import '../models/category.dart';
 
 class CategoryMealsScreen extends StatefulWidget {
   final Category category;
+  final List<Meal> avaliableMeals;
 
-  CategoryMealsScreen(this.category);
+  CategoryMealsScreen(this.category, this.avaliableMeals);
 
   @override
   _CategoryMealsScreenState createState() => _CategoryMealsScreenState();
@@ -21,15 +21,9 @@ class _CategoryMealsScreenState extends State<CategoryMealsScreen> {
   @override
   void initState() {
     super.initState();
-    displayedMeals = DUMMY_MEALS.where((meal) {
+    displayedMeals = widget.avaliableMeals.where((meal) {
       return meal.categories.contains(widget.category.id);
     }).toList();
-  }
-
-  void _removeItem(String mealId) {
-    setState(() {
-      displayedMeals.removeWhere((element) => element.id == mealId);
-    });
   }
 
   @override
@@ -41,7 +35,7 @@ class _CategoryMealsScreenState extends State<CategoryMealsScreen> {
       body: ListView.builder(
         itemCount: displayedMeals.length,
         itemBuilder: (ctx, index) {
-          return MealItem(displayedMeals[index], _removeItem);
+          return MealItem(displayedMeals[index]);
         },
       ),
     );

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'dummy_data.dart';
+import 'models/meal.dart';
 import 'models/category.dart';
+import 'models/filter_model.dart';
 import 'screens/filters_screen.dart';
 import 'screens/tabs_screen.dart';
 import 'screens/meal_detail_screen.dart';
@@ -10,8 +13,66 @@ void main() {
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   // This widget is the root of your application.
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  var filters = Filter(
+    isGlutenFree: false,
+    isLactoseFree: false,
+    isVegan: false,
+    isVegetarian: false,
+  );
+
+  List<Meal> _avaliableMeals = DUMMY_MEALS;
+  List<Meal> _favoriteMeals = [];
+
+  void _setFilters(Filter filter) {
+    setState(() {
+      filters = filter;
+
+      _avaliableMeals = DUMMY_MEALS.where((meal) {
+        if (filters.isGlutenFree && !meal.isGlutenFree) {
+          return false;
+        }
+        if (filters.isLactoseFree && !meal.isLactoseFree) {
+          return false;
+        }
+        if (filters.isVegan && !meal.isVegan) {
+          return false;
+        }
+        if (filters.isVegetarian && !meal.isVegetarian) {
+          return false;
+        }
+        return true;
+      }).toList();
+    });
+  }
+
+  void _toggleFavorites(String mealId) {
+    var existingIndex =
+        _favoriteMeals.indexWhere((element) => element.id == mealId);
+
+    if (existingIndex != -1) {
+      setState(() {
+        _favoriteMeals.removeAt(existingIndex);
+      });
+    } else {
+      setState(() {
+        _favoriteMeals.add(
+          DUMMY_MEALS.firstWhere((element) => element.id == mealId),
+        );
+      });
+    }
+  }
+
+  bool isMealFavorite(String mealId) {
+    return _favoriteMeals.any((element) => element.id == mealId);
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -40,16 +101,19 @@ class MyApp extends StatelessWidget {
           final args = settings.arguments as Category;
           return MaterialPageRoute(
             builder: (context) {
-              return CategoryMealsScreen(args);
+              return CategoryMealsScreen(args, _avaliableMeals);
             },
           );
         }
       },
       routes: {
-        '/': (ctx) => TabsScreen(),
+        '/': (ctx) => TabsScreen(_favoriteMeals),
         // '/category_meals': (ctx) => CategoryMealsScreen(),
-        '/meal_detail': (ctx) => MealDetailScreen(),
-        '/filters': (ctx) => FiltersScreen()
+        '/meal_detail': (ctx) => MealDetailScreen(
+              _toggleFavorites,
+              isMealFavorite,
+            ),
+        '/filters': (ctx) => FiltersScreen(filters, _setFilters)
       },
     );
   }
